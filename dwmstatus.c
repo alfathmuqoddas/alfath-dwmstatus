@@ -201,12 +201,12 @@ main(void)
 		/*tmar = mktimes("%H:%M", tzargentina);*/
 		/*tmutc = mktimes("%H:%M", tzutc);*/
 		/*tmbln = mktimes("KW %W %a %d %b %H:%M %Z %Y", tzberlin);*/
-		tmjkt = mktimes("%a, %d %b %Y %H:%M", tzjakarta);
+		tmjkt = mktimes("%a, %d %b %Y |  %H:%M", tzjakarta);
 		t0 = gettemperature("/sys/devices/virtual/hwmon/hwmon0", "temp1_input");
 		t1 = gettemperature("/sys/devices/virtual/hwmon/hwmon2", "temp1_input");
 		t2 = gettemperature("/sys/devices/virtual/hwmon/hwmon4", "temp1_input");
 
-		status = smprintf(" %s%s |%s  %s %s|%s  %s",
+		status = smprintf(" %s%s%s |  %s |  %s%s |  %s",
 				t0, t1, t2, avgs, bat, bat1,
 				tmjkt);
 		setstatus(status);
