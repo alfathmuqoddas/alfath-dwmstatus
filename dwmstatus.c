@@ -14,12 +14,10 @@
 #include <time.h>
 #include <sys/types.h>
 #include <sys/wait.h>
+#include <sys/sysinfo.h>
 
 #include <X11/Xlib.h>
 
-/*char *tzargentina = "America/Buenos_Aires";
-char *tzutc = "UTC";
-char *tzberlin = "Europe/Berlin";*/
 char *tzjakarta = "Asia/Jakarta";
 
 static Display *dpy;
@@ -94,6 +92,18 @@ loadavg(void)
 }
 
 char *
+getram(void)
+{
+	struct sysinfo info;
+    sysinfo(&info);
+
+  	// Calculate the amount of available RAM
+  	//long long avail_ram = info.freeram * info.mem_unit / (1024 * 1024);
+
+	return smprintf("%lld MB", (info.totalram - info.freeram) * info.mem_unit / (1024 * 1024));
+}
+
+char *
 readfile(char *base, char *file)
 {
 	char *path, line[513];
@@ -165,17 +175,6 @@ getbattery(char *base)
 	return smprintf("%.0f%%%c", ((float)remcap / (float)descap) * 100, status);
 }
 
-char *
-gettemperature(char *base, char *sensor)
-{
-	char *co;
-
-	co = readfile(base, sensor);
-	if (co == NULL)
-		return smprintf("");
-	return smprintf("%02.0f°C", atof(co) / 1000);
-}
-
 int
 main(void)
 {
@@ -183,11 +182,8 @@ main(void)
 	char *avgs;
 	char *bat;
 	char *bat1;
-	/*char *tmar;
-	char *tmutc;
-	char *tmbln;*/
+	char *usedram;
 	char *tmjkt;
-	char *t0, *t1, *t2;
 
 	if (!(dpy = XOpenDisplay(NULL))) {
 		fprintf(stderr, "dwmstatus: cannot open display.\n");
@@ -196,30 +192,19 @@ main(void)
 
 	for (;;sleep(60)) {
 		avgs = loadavg();
+		usedram = getram();
 		bat = getbattery("/sys/class/power_supply/BAT0");
 		bat1 = getbattery("/sys/class/power_supply/BAT1");
-		/*tmar = mktimes("%H:%M", tzargentina);*/
-		/*tmutc = mktimes("%H:%M", tzutc);*/
-		/*tmbln = mktimes("KW %W %a %d %b %H:%M %Z %Y", tzberlin);*/
 		tmjkt = mktimes("%a, %d %b %Y |  %H:%M", tzjakarta);
-		t0 = gettemperature("/sys/devices/virtual/hwmon/hwmon0", "temp1_input");
-		t1 = gettemperature("/sys/devices/virtual/hwmon/hwmon2", "temp1_input");
-		t2 = gettemperature("/sys/devices/virtual/hwmon/hwmon4", "temp1_input");
-
-		status = smprintf(" %s%s%s |  %s |  %s%s |  %s",
-				t0, t1, t2, avgs, bat, bat1,
+		status = smprintf("  %s |  %s |  %s%s |  %s",
+				usedram, avgs, bat, bat1,
 				tmjkt);
 		setstatus(status);
 
-		free(t0);
-		free(t1);
-		free(t2);
+		free(usedram);
 		free(avgs);
 		free(bat);
 		free(bat1);
-		/*free(tmar);*/
-		/*free(tmutc);*/
-		/*free(tmbln);*/
 		free(tmjkt);
 		free(status);
 	}
